@@ -7,9 +7,11 @@ import {
   searchReservationsByUser,
 } from "../controllers/reservationController.js";
 import { authorizeRoles } from "../utils/authorizeRole.js";
+import { upload } from "../utils/multerConfig.js"; // Import the image upload middleware
+
 const router = express.Router();
 
-router.post("/", authorizeRoles(["GUEST", "RECEPTIONIST"]), createReservation);
+router.post("/", upload.single("file"), authorizeRoles(["GUEST", "RECEPTIONIST"]), createReservation);
 
 router.get(
   "/",
