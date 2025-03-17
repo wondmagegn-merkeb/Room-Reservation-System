@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String   @unique
+  role      Role
+  password  String
+  image     String?
+  status    Status   @default(INACTIVE)
+  verificationToken String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  rooms     Room[]    // Relation to Room model
+  amenities Amenity[] // Relation to Amenity model
+  roomTypes RoomType[]// Relation to RoomType model
+  logs      Log[]     // Relation to Log model
+}
+
+enum Role {
+  ADMIN
+  ROOM_MANAGER
+  RECEPTIONIST
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  BLOCK
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  otp       String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Amenity {
+  id          String     @id @default(uuid()) @db.Char(36)
+  name        String
+  description String?
+  roomTypes   RoomType[] // Relation to RoomType model
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+}
+
+model RoomType {
+  id          String    @id @default(uuid()) @db.Char(36)
+  name        String
+  description String?
+  room        Room[]    // Relation to Room model
+  amenities   Amenity[] // Relation to Amenity model
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model Room {
+  id            String       @id @default(uuid())
+  room_number   Int          @unique
+  price         Decimal
+  is_available  Boolean      @default(true)
+  room_type_id  String
+  roomStatus    RoomStatus  @default(AVAILABLE) // Enum for room status
+  RoomImags     RoomImages[] // Relation to RoomImages model
+  userId        String
+  reservations  Reservation[] // Relation to Reservation model
+  user          User        @relation(fields: [userId], references: [id])
+  roomType      RoomType    @relation(fields: [room_type_id], references: [id])
+}
+
+model RoomImages {
+  id        String  @id @default(uuid())
+  image_url String
+  roomId    String?
+  Room      Room?   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+}
+
+enum RoomStatus {
+  AVAILABLE
+  UNDER_MAINTENANCE
+  UNAVAILABLE
+}
+
+model Guest {
+  id            String @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String @unique
+  phone         String @unique
+  password      String // Added password field for
+  status        Status   @default(INACTIVE)
+  reservations  Reservation[] // Relation to Reservation model
+  GuestLog      GuestLog[]
+}
+
+model Reservation {
+  id           String            @id @default(uuid())
+  checkInDate  DateTime 
+  checkOutDate DateTime 
+  createdAt    DateTime          @default(now())
+  roomId       String
+  guestId      String           
+  status       ReservationStatus @default(PENDING)
+  payments     Payment[]         // Relation to Payment model
+  room         Room              @relation(fields: [roomId], references: [id]) // Relation to Room model
+  guest        Guest             @relation(fields: [guestId], references: [id]) // Relation to Guest model
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  reservationId   String 
+  paymentId       String 
+  amount          Decimal 
+  image           String
+  status          PaymentStatus  @default(PENDING)
+  reservation     Reservation  @relation(fields: [reservationId], references: [id])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+// Log model to track all operations
+model Log {
+  id          String      @id @default(uuid())
+  category    LogCategory // Operation category (CREATE, UPDATE, DELETE, etc.)
+  description String      // Detailed description of the action performed
+  performedBy String      // User ID of the person performing the action
+  timestamp   DateTime    @default(now())
+  userId      User     @relation(fields: [performedBy], references: [id]) // Foreign key from User model
+}
+
+// Log model to track all operations
+model GuestLog {
+  id          String      @id @default(uuid())
+  category    LogCategory // Operation category (CREATE, UPDATE, DELETE, etc.)
+  description String      // Detailed description of the action performed
+  performedBy String      // User ID of the person performing the action
+  timestamp   DateTime    @default(now())
+  userId      Guest     @relation(fields: [performedBy], references: [id]) // Foreign key from User model
+}
+
+enum LogCategory {
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  CREATE
+  UPDATE
+  DELETE
+  READ
+  LOGIN
+  LOGOUT
+}
+
