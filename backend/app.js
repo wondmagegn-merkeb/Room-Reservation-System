@@ -16,6 +16,7 @@ import paymentRoutes from "./src/routes/paymentRoutes.js"
 import reservationRoutes from "./src/routes/reservationRouter.js";
 import userRouter from "./src/routes/userRoutes.js"; // Adjust the path as needed
 import guestRoutes  from "./src/routes/guestRoutes.js";
+import logRoutes from "./src/routes/logRoutes.js"
 import multer from "multer";
 
 dotenv.config();
@@ -41,15 +42,16 @@ const corsOptions = {
 app.use(cors());
 
 // Routes
-app.use("/api", userRouter);
+app.use("/api/users", userRouter);
 app.use("/api/room-types", roomTypeRoutes);
 app.use("/api/rooms", roomsRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/amenities", amenityRoutes);
-app.use("/room-images", roomImagesRoutes);
+app.use("/api/room-images", roomImagesRoutes);
 app.use("/api/amenity-to-room-types", amenitiesRoutes);
-app.use("/payments", paymentRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/logs", logRoutes);
 
 // handle multer error
 app.use((err, req, res, next) => {
