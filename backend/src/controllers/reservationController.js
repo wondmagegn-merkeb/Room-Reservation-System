@@ -8,7 +8,6 @@ export const createReservation = async (req, res) => {
       roomId,
       guestId,
       paymentId,
-      image,
       paymentStatus,
       amount,
     } = req.body;
@@ -20,12 +19,12 @@ export const createReservation = async (req, res) => {
       !roomId ||
       !guestId ||
       !paymentId ||
-      !image ||
       !paymentStatus ||
       !amount
     ) {
       return res.status(400).json({ error: "All fields are required." });
     }
+    const image = req.file?.filename || "";
 
     // Get today's date without time component
     const today = new Date();
