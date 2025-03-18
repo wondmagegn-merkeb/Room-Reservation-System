@@ -21,13 +21,15 @@ export const addAmenity = async (req, res) => {
     );
 
     res.status(200).json({
-      message: 'Amenity successfully connected to RoomType',
+      success: true,
+      message: `Amenity with ID ${amenityId} successfully connected to RoomType ID ${roomTypeId}.`,
       data: updatedRoomType,
     });
   } catch (error) {
     console.error('Error connecting Amenity to RoomType:', error);
     res.status(500).json({
-      error: 'An error occurred while connecting the amenity.',
+      success: false,
+      error: 'An error occurred while connecting the amenity. Please try again later.',
     });
   }
 };
@@ -40,7 +42,10 @@ export const getAmenities = async (req, res) => {
     const { roomTypeId } = req.params;
     const roomType = await getAmenitiesFromRoomType(roomTypeId);
     if (!roomType) {
-      return res.status(404).json({ message: 'RoomType not found' });
+      return res.status(404).json({
+        success: false,
+        message: `RoomType with ID ${roomTypeId} not found.`
+      });
     }
 
     // Log the operation (fetch amenities for room type)
@@ -50,11 +55,16 @@ export const getAmenities = async (req, res) => {
       req.user.id
     );
 
-    res.status(200).json({ amenities: roomType.amenities });
+    res.status(200).json({
+      success: true,
+      message: `Amenities retrieved successfully for RoomType ID ${roomTypeId}.`,
+      amenities: roomType.amenities,
+    });
   } catch (error) {
-    console.error('Error fetching amenities:', error);
+    console.error('Error fetching amenities for RoomType:', error);
     res.status(500).json({
-      error: 'Error fetching amenities for the room type.',
+      success: false,
+      error: 'Error fetching amenities for the room type. Please try again later.',
     });
   }
 };
@@ -75,13 +85,15 @@ export const deleteAmenity = async (req, res) => {
     );
 
     res.status(200).json({
-      message: 'Amenity successfully disconnected from RoomType',
+      success: true,
+      message: `Amenity with ID ${amenityId} successfully disconnected from RoomType ID ${roomTypeId}.`,
       data: updatedRoomType,
     });
   } catch (error) {
     console.error('Error disconnecting Amenity from RoomType:', error);
     res.status(500).json({
-      error: 'Error disconnecting amenity from the room type.',
+      success: false,
+      error: 'Error disconnecting amenity from the room type. Please try again later.',
     });
   }
 };
