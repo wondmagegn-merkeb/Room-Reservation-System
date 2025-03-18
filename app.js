@@ -58,14 +58,14 @@ app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     // Log Multer-specific errors
     console.error('Multer Error:', err);
-    res.status(400).json({ success: false, statusCode: 400, error: err.message });
+    res.status(400).json({ success: false,  error: err.message });
   } else if (err) {
     // Log other errors
     console.error('General Error:', err);
-    res.status(500).json({ success: false, statusCode: 500, error: err.message });
+    res.status(500).json({ success: false,  error: err.message });
   } else {
     // Success response
-    res.status(200).json({ success: true, statusCode: 200, message: "File uploaded successfully" });
+    res.status(200).json({ success: true, message: "File uploaded successfully" });
   }
 });
 
