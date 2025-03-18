@@ -18,7 +18,8 @@ export const registerUser = async (req, res) => {
 
     // Check for missing required fields
     if (!firstName || !lastName || !password || !email || !phone) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({ success: false,
+message: "Missing required fields" });
     }
 
     // Check if the email or phone already exists
@@ -35,6 +36,7 @@ export const registerUser = async (req, res) => {
       }
 
       return res.status(400).json({
+        success: false,
         error:
           existingUser.email === email
             ? "Email already exists. Please try another one."
@@ -50,6 +52,7 @@ export const registerUser = async (req, res) => {
 
     if (existingGuest) {
       return res.status(400).json({
+        success: false,
         error:
           existingGuest.email === email
             ? "Email already exists. Please try another one."
@@ -93,6 +96,7 @@ export const registerUser = async (req, res) => {
     await sendVerificationEmail(email, verificationToken);
 
     return res.status(201).json({
+      success: true,
       message:
         "User registered successfully. Please check your email to verify your account.",
       ...users,
@@ -106,6 +110,7 @@ export const registerUser = async (req, res) => {
     // Handle specific Prisma error codes
     if (error.code === "P2002") {
       return res.status(400).json({
+        success: false,
         error:
           "A user with this email or phone already exists. Please try a different one.",
       });
@@ -115,27 +120,27 @@ export const registerUser = async (req, res) => {
     if (error.message.includes("validation")) {
       return res
         .status(422)
-        .json({ error: "Validation failed", details: error.message });
+        .json({ 
+          success: false,error: "Validation failed", details: error.message });
     }
 
     // Default error handler for any other unexpected issues
     return res
       .status(500)
-      .json({ message: "Error registering user", error: error.message });
+      .json({success: false,message: "Error registering user", error: error.message });
   }
 };
-
 // Get All Users
 export const getAllUsers = async (req, res) => {
   try {
     // Fetch users from the database
-   const userdata = await prisma.user.findMany({
-     where: {
-       id: {
-         not: req.user.id, // Exclude the user with the given ID
-       },
-     },
-   });
+    const userdata = await prisma.user.findMany({
+      where: {
+        id: {
+          not: req.user.id, // Exclude the user with the given ID
+        },
+      },
+    });
 
     const users = userdata.map(({ password, image, ...users }) => ({
       ...users,
@@ -144,7 +149,10 @@ export const getAllUsers = async (req, res) => {
 
     // Check if no users are found
     if (!users || users.length === 0) {
-      return res.status(404).json({ message: "No users found" });
+      return res.status(404).json({
+        success: true,
+        message: "No users found",
+      });
     }
 
     // Log the operation in the Log table
@@ -155,49 +163,57 @@ export const getAllUsers = async (req, res) => {
         performedBy: req.user.id, // Assuming the user who performed the action is logged in
       },
     });
-  
+
     // Send a success response with the list of users
-    return res.status(200).json({ users });
+    return res.status(200).json({ success: true, users });
   } catch (error) {
+    // Log the error to the console for debugging
+    console.error("Error fetching users:", error.message || error); // Log the error message or the error itself
 
     // Return an error response
-    return res
-      .status(500)
-      .json({ message: "Error fetching users", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching users",
+      error: error.message || error,
+    });
   }
 };
-
 // Get User by ID
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(id)
+    console.log("Fetching user with ID:", id);
+
     // Fetch the user by ID
     const user = await prisma.user.findUnique({ where: { id: id } });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    // Create a log entry for the READ operation, including the user's name
-    await prisma.log.create({
-      data: {
-        category: "READ", // Category could be READ since you're retrieving data
-        description: `Fetched user with ID ${id} (${user.firstName} ${user.lastName})`, // Description with user's name
-        performedBy: req.user.id, // The user performing the action
-      },
-    });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     // Exclude password and generate image path
     const { password, ...users } = user;
     const image = pathGenerator(user.image);
 
     // Send a success response with the user data
-    res.status(200).json({ ...users, image });
+    return res.status(200).json({
+      success: true,
+      user: { ...users, image },
+    });
   } catch (error) {
-    // Log the error and return a response
-    console.error(error);
-    res.status(500).json({ message: "Error fetching user", error });
+    // Log the error message to the console for debugging
+    console.error("Error fetching user:", error.message || error);
+
+    // Return an error response with success flag set to false
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching user",
+      error: error.message || error,
+    });
   }
 };
-
 // Update User
 export const updateUser = async (req, res) => {
   try {
@@ -207,13 +223,13 @@ export const updateUser = async (req, res) => {
     // Find the user
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
     if (user.id !== id) {
       return res
         .status(400)
-        .json({ message: "Access Forbidden: Insufficient Role" });
+        .json({ success: false, message: "Access Forbidden: Insufficient Role" });
     }
     
     // Check if email or phone already exists (excluding the current user)
@@ -226,6 +242,7 @@ export const updateUser = async (req, res) => {
 
     if (existingUser) {
       return res.status(400).json({
+        success: false,
         error:
           existingUser.email === email
             ? "Email already exists. Please try another one."
@@ -244,18 +261,19 @@ export const updateUser = async (req, res) => {
       // Send verification email
       const verificationToken = crypto.randomBytes(32).toString("hex");
 
-       await prisma.user.update({
-         where: { id: id },
-         data: {
-           verificationToken,
-           status: "INACTIVE",
-         },
-       });
+      await prisma.user.update({
+        where: { id: id },
+        data: {
+          verificationToken,
+          status: "INACTIVE",
+        },
+      });
 
       // Send verification email
       await sendVerificationEmail(email, verificationToken);
       changes.push("Status changed to INACTIVE, verification email sent.");
     }
+
     // Update user in the database
     const updatedUserData = await prisma.user.update({
       where: { id: id },
@@ -266,7 +284,6 @@ export const updateUser = async (req, res) => {
         phone,
       },
     });
-
 
     // Create a log entry for the update operation
     await prisma.log.create({
@@ -280,61 +297,69 @@ export const updateUser = async (req, res) => {
     const { password: _, ...updatedUser } = updatedUserData;
 
     // Send success response
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       message: "User updated successfully",
       ...updatedUser,
       image: pathGenerator(updatedUser.image),
     });
   } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ message: "Error updating user", error: error.message });
+    // Log the error message to the console for debugging
+    console.error("Error updating user:", error.message || error);
+
+    // Return an error response with success flag set to false
+    return res.status(500).json({
+      success: false,
+      message: "Error updating user",
+      error: error.message || error,
+    });
   }
 };
-
 // Update Profile Photo Route
 export const ProfileUser = async (req, res) => {
   try {
     const { id } = req.params;
     const profilePhoto = req.file ? req.file.filename : null;
 
+    // Check if a file is uploaded
     if (!profilePhoto) {
-      return res.status(400).json({ message: "No file uploaded" });
+      console.error("No file uploaded");
+      return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    // Find the user
-    const user = await prisma.user.findUnique({ where: { id: id} });
+    // Find the user by ID
+    const user = await prisma.user.findUnique({ where: { id: id } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.error(`User with ID ${id} not found`);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Delete old profile photo if exists
+    // Delete old profile photo if it exists
     if (user.image) {
       UnlinkImage(user.image);
+      console.log(`Deleted old profile photo: ${user.image}`);
     }
 
-    // Update user profile photo
-   await prisma.user.update({
-      where: { id: id},
+    // Update the user's profile photo in the database
+    await prisma.user.update({
+      where: { id: id },
       data: {
         image: profilePhoto,
       },
     });
-    // Create a log entry for the update operation
-    await prisma.log.create({
-      data: {
-        category: "UPDATE", 
-        description: `Updated user with ID ${id}. Changes the user profile photo`, 
-        performedBy: req.user.id
-      }
-    });
 
     res.json({
+      success: true,
       message: "Profile photo updated successfully",
       photoUrl: `/uploads/${profilePhoto}`,
     });
   } catch (error) {
+    // Log the error message for debugging
     console.error("Error updating user profile photo:", error);
+
+    // Return an error response
     res.status(500).json({
+      success: false,
       message: "Error updating user profile photo",
       error: error.message,
     });
@@ -382,45 +407,62 @@ export const changeStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body; // Expecting status to be either 'ACTIVE' or 'INACTIVE'
 
-    if (!["ACTIVE","BLOCK"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
+    // Validate status value
+    if (!["ACTIVE", "BLOCK"].includes(status)) {
+      console.error("Invalid status value:", status);
+      return res.status(400).json({ success: false, message: "Invalid status value" });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: id} });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // Find the user
+    const user = await prisma.user.findUnique({ where: { id: id } });
+    if (!user) {
+      console.error(`User with ID ${id} not found`);
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-    // Create a log entry before updating the status
-    await prisma.log.create({
-      data: {
-        category: "UPDATE", // Category for the operation
-        description: `Changed status of user with ID ${id} from ${user.status} to ${status}`, // Description of the status change
-        performedBy: req.user.id, // The user performing the action
-      },
-    });
-
-    if(user.verificationToken){
+    // Remove verification token if it exists
+    if (user.verificationToken) {
       await prisma.user.update({
-        where:{id: id},
-        data:{
-          verificationToken:null
-        }
-      })
+        where: { id: id },
+        data: {
+          verificationToken: null,
+        },
+      });
+      console.log(`Verification token removed for user with ID ${id}`);
     }
+
     // Update user status in the database
     const updatedUser = await prisma.user.update({
-      where: { id: id},
+      where: { id: id },
       data: {
         status,
       },
     });
 
+    // Log the status change operation
+    await prisma.log.create({
+      data: {
+        category: "UPDATE",
+        description: `Changed status of user with ID ${id} from ${user.status} to ${status}`,
+        performedBy: req.user.id,
+      },
+    });
+
+
     // Send a success response
-    res.status(200).json({ message: "User status updated", updatedUser });
+    res.status(200).json({ success: true, message: "User status updated", updatedUser });
   } catch (error) {
-    res.status(500).json({ message: "Error updating status", error });
+    // Log the error for debugging
+    console.error("Error updating user status:", error);
+
+    // Send error response
+    res.status(500).json({
+      success: false,
+      message: "Error updating status",
+      error: error.message || error,
+    });
   }
 };
-
 // Change Password
 export const changePassword = async (req, res) => {
   try {
@@ -428,21 +470,22 @@ export const changePassword = async (req, res) => {
     const { password } = req.body;
 
     if (!password) {
-      return res.status(400).json({ message: "Password is required" });
+      console.error("Password is required");
+      return res.status(400).json({ success: false, message: "Password is required" });
     }
 
     // Find the user by ID
     const user = await prisma.user.findUnique({ where: { id: id } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.error(`User with ID ${id} not found`);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
-    
+
     if (user.id !== id) {
-      return res
-        .status(400)
-        .json({ message: "Access Forbidden: Insufficient Role" });
+      console.error("Access Forbidden: Insufficient Role");
+      return res.status(400).json({ success: false, message: "Access Forbidden: Insufficient Role" });
     }
-    
+
     // Hash the password
     const hashedPassword = await hashPassword(password);
 
@@ -457,27 +500,27 @@ export const changePassword = async (req, res) => {
     // Create a log entry for password change
     await prisma.log.create({
       data: {
-        category: "UPDATE", // Category for the operation
-        description: `Changed password for user with ID ${id} (${user.firstName} ${user.lastName})`, // Description of the action
-        performedBy: req.user.id, // The user performing the action
+        category: "UPDATE",
+        description: `Changed password for user with ID ${id} (${user.firstName} ${user.lastName})`,
+        performedBy: req.user.id,
       },
     });
 
     // Respond with success message
+    console.log(`Password successfully updated for user ID ${id}`);
     return res.status(200).json({
+      success: true,
       message: "Password successfully updated",
       user: {
         id: updatedUser.id,
-        email: updatedUser.email, // Include other user details as needed
-      }
+        email: updatedUser.email,
+      },
     });
 
   } catch (error) {
-    // Log the error for debugging
     console.error('Error updating password:', error);
-
-    // Respond with a generic error message
     return res.status(500).json({
+      success: false,
       message: "An error occurred while updating the password",
       error: error.message || error,
     });
@@ -492,19 +535,23 @@ export const forgotPassword = async (req, res) => {
     // Check if the user exists
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      console.error(`User with email ${email} not found`);
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    // Generate OTP and send email
+    const otp = await saveOTP(email);
+    await sendOTPEmail(email, otp);
 
-   const otp = await saveOTP(email);
-   await sendOTPEmail(email, otp);
-
-    return res.status(200).json({ message: "OTP sent to email" });
+    console.log(`OTP sent to email: ${email}`);
+    return res.status(200).json({ success: true, message: "OTP sent to email" });
   } catch (error) {
-    console.log(error)
-    return res
-      .status(500)
-      .json({ message: "Error processing the request", error: error.message });
+    console.error("Error processing forgot password request:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error processing the request",
+      error: error.message,
+    });
   }
 };
 
@@ -516,7 +563,8 @@ export const resetPassword = async (req, res) => {
     // Verify OTP
     const isOtpValid = await verifyOTP(email, otp);
     if (!isOtpValid) {
-      return res.status(400).json({ message: "Invalid or expired OTP" });
+      console.error("Invalid or expired OTP");
+      return res.status(400).json({ success: false, message: "Invalid or expired OTP" });
     }
 
     // Hash the new password
@@ -528,11 +576,15 @@ export const resetPassword = async (req, res) => {
       data: { password: hashedPassword },
     });
 
-    return res.status(200).json({ message: "Password successfully reset" });
+    console.log(`Password successfully reset for user with email: ${email}`);
+    return res.status(200).json({ success: true, message: "Password successfully reset" });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Error resetting password", error: error.message });
+    console.error("Error resetting password:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error resetting password",
+      error: error.message,
+    });
   }
 };
 
@@ -596,6 +648,47 @@ export const loginUser = async (req, res) => {
     // Log the error message to the console for debugging
     console.error("Error logging in:", error.message || error);  // log the error message
     return res.status(500).json({ success: false, message: "Error logging in", error });
+  }
+};
+
+// Logout User
+export const logoutUser = async (req, res) => {
+  try {
+    // Clear cookies for access_token and refresh_token
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      sameSite: "Strict",
+    });
+
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+    });
+
+    // Log the logout action
+    await prisma.log.create({
+      data: {
+        category: "LOGOUT",
+        description: `User with ID ${req.user.id} logged out`,
+        performedBy: req.user.id,
+      },
+    });
+
+    // Send success response
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+  } catch (error) {
+    // Log the error message for debugging
+    console.error("Error logging out:", error.message || error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Error logging out",
+      error: error.message || error,
+    });
   }
 };
 
