@@ -241,8 +241,7 @@ export const updateReservationStatus = async (req, res) => {
 
 export const searchReservationsByUser = async (req, res) => {
   try {
-    const { guestId } = req.query;
-
+    const { guestId } = req.parms;
     // Validate that guestId is provided
     if (!guestId) {
       return res.status(400).json({ error: "Guest ID is required." });
