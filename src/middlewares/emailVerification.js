@@ -31,8 +31,9 @@ export const verifyEmailMiddleware =async (req,res , next)=>{
 }
 
 export const sendVerificationEmail = async (email, verificationToken) => {
-    const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
 
+  try {
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: email,
@@ -57,7 +58,22 @@ export const sendVerificationEmail = async (email, verificationToken) => {
         </div>
       `,
     });
-
+  } catch (error) {
+    // Capture and log the specific error message if email fails to send
+    console.error("Error sending verification email:", error);
+    
+    // Example: If you're using the nodemailer error object, you can access the following properties
+    if (error.response) {
+      console.error("SMTP Error Response: ", error.response); // This provides the SMTP server's response
+    }
+    
+    // Send a response to the client
+    return res.status(500).json({
+      success: false,
+      message: "Error sending verification email",
+      error: error.message || "Unknown error", // Capture the specific error message
+    });
+  }
 };
 
 
@@ -93,4 +109,5 @@ export const verifyEmail = async (req, res) => {
     });
   }
 };
+
 
