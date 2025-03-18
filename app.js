@@ -42,7 +42,7 @@ const corsOptions = {
 app.use(cors());
 
 // Routes
-app.use("/api", userRouter);
+app.use("/api/user", userRouter);
 app.use("/api/room-types", roomTypeRoutes);
 app.use("/api/rooms", roomsRoutes);
 app.use("/api/guests", guestRoutes);
@@ -53,15 +53,19 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/logs", logRoutes);
 
-
-// handle multer error
+// Handle multer error and send success response
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    // Multer-specific errors
-    res.status(400).json({ error: err.message });
+    // Log Multer-specific errors
+    console.error('Multer Error:', err);
+    res.status(400).json({ success: false, statusCode: 400, error: err.message });
   } else if (err) {
-    // Other errors
-    res.status(500).json({ error: err.message });
+    // Log other errors
+    console.error('General Error:', err);
+    res.status(500).json({ success: false, statusCode: 500, error: err.message });
+  } else {
+    // Success response
+    res.status(200).json({ success: true, statusCode: 200, message: "File uploaded successfully" });
   }
 });
 
@@ -69,51 +73,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-import nodemailer from "nodemailer";
-
-// Generate a random 6-digit OTP code
-const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-// Create a transporter object
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "wondmagegnmerkebbeleka@gmail.com",
-    pass: "jfwp dcrm khrm ypsd", // Use OAuth or environment variables for better security
-  },
-});
-
-// Email options
-const mailOptions = {
-  from: "wondmagegnmerkebbeleka@gmail.com",
-  to: "wondmagegnmerkbebeleka@gmail.com",
-  subject: "Your OTP Code",
-  html: `
-        <div style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center;">
-            <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; 
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
-                <h2 style="color: #2D89EF;">Your OTP Code</h2>
-                <p style="font-size: 16px; color: #555;">
-                    Use the code below to complete your verification. This code is valid for <strong>5 minutes</strong>.
-                </p>
-                <div style="font-size: 24px; font-weight: bold; color: #2D89EF; 
-                            padding: 10px; background: #f1f1f1; display: inline-block; border-radius: 5px;">
-                    ${otp}
-                </div>
-                <p style="font-size: 14px; color: #999; margin-top: 20px;">
-                    If you did not request this, please ignore this email.
-                </p>
-            </div>
-        </div>
-    `,
-};
-
-// // Send email
-// transporter.sendMail(mailOptions, (error, info) => {
-//   if (error) {
-//     console.error("Error:", error);
-//   } else {
-//     console.log("Email sent:", info.response);
-//   }
-// });
