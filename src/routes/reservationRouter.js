@@ -32,7 +32,7 @@ router.put(
 );
 
 router.get(
-  "/:guestId",
+  "/guest/:guestId",
   authorizeRoles(["ADMIN", "ROOM_MANAGER", "RECEPTIONIST"]),
   searchReservationsByUser
 );
