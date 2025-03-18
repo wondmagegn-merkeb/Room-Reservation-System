@@ -29,7 +29,6 @@ export const verifyEmailMiddleware =async (req,res , next)=>{
         return res.status(400).json({ success: false, message: "Invalid email address" })
     }
 }
-
 export const sendVerificationEmail = async (email, verificationToken) => {
   const verificationUrl = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
 
@@ -58,24 +57,19 @@ export const sendVerificationEmail = async (email, verificationToken) => {
         </div>
       `,
     });
+
+    return { success: true, message: "Verification email sent successfully" };
   } catch (error) {
-    // Capture and log the specific error message if email fails to send
     console.error("Error sending verification email:", error);
-    
-    // Example: If you're using the nodemailer error object, you can access the following properties
+
     if (error.response) {
-      console.error("SMTP Error Response: ", error.response); // This provides the SMTP server's response
+      console.error("SMTP Error Response: ", error.response);
     }
-    
-    // Send a response to the client
-    return res.status(500).json({
-      success: false,
-      message: "Error sending verification email",
-      error: error.message || "Unknown error", // Capture the specific error message
-    });
+
+    // Return the error instead of using `res`
+    return { success: false, message: "Error sending verification email", error: error.message || "Unknown error" };
   }
 };
-
 
 export const verifyEmail = async (req, res) => {
   try {
