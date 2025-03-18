@@ -535,24 +535,23 @@ export const resetPassword = async (req, res) => {
       .json({ message: "Error resetting password", error: error.message });
   }
 };
-
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // Find the user by email
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     // Validate password
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid)
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
 
     if (user.status !== "ACTIVE")
       return res
         .status(401)
-        .json({ message: "Please verify your email before logging in." });
+        .json({ success: false, message: "Please verify your email before logging in." });
 
     // Generate tokens
     const accessToken = generateAccessToken(user);
@@ -583,12 +582,14 @@ export const loginUser = async (req, res) => {
 
     // Send response with userId, role, and user name
     return res.status(200).json({
+      success: true,
       message: "Login successful",
     });
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Error logging in", error });
+    // Log the error message to the console for debugging
+    console.error("Error logging in:", error.message || error);  // log the error message
+    return res.status(500).json({ success: false, message: "Error logging in", error });
   }
 };
 
