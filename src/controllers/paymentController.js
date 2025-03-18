@@ -2,13 +2,20 @@ import {
   getAllPayments,
   getPaymentById,
 } from "../models/paymentModel.js";
+import { prisma } from "../prismaClient.js"; // Prisma client import
 
 export const getPaymentsHandler = async (req, res) => {
   try {
     const payments = await getAllPayments();
-    res.status(200).json(payments);
+    
+    res.status(200).json({
+      success: true,
+      message: "Payments retrieved successfully",
+      data: payments,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching payments:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -16,17 +23,27 @@ export const getPaymentByIdHandler = async (req, res) => {
   try {
     const payment = await getPaymentById(req.params.id);
     if (!payment) {
-      return res.status(404).json({ error: "Payment not found" });
+      return res.status(404).json({
+        success: false,
+        error: "Payment not found",
+      });
     }
-    res.status(200).json(payment);
+    
+    res.status(200).json({
+      success: true,
+      message: "Payment retrieved successfully",
+      data: payment,
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching payment:", error.message);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
 export const updatePaymentStatusAndReservation = async (
   paymentId,
-  paymentStatus
+  paymentStatus,
+  req
 ) => {
   try {
     // Validate that paymentStatus is provided and valid
@@ -79,15 +96,25 @@ export const updatePaymentStatusAndReservation = async (
       });
     }
 
+    // Log the operation in the Log table for updating payment status
+    await prisma.log.create({
+      data: {
+        category: "UPDATE", // Category could be UPDATE since you're updating data
+        description: `Updated payment status for payment ID ${paymentId} to ${paymentStatus}`, // Description of the action
+        performedBy: req.user.id, // Assuming the user who performed the action is logged in
+      },
+    });
+
     return {
+      success: true,
+      message: `Payment status and reservation status updated successfully.`,
       updatedPayment,
       reservationStatus: reservationStatus || "No status change",
     };
   } catch (error) {
+    console.error("Error updating payment and reservation status:", error.message);
     throw new Error(
       "Error updating payment and reservation status: " + error.message
     );
   }
 };
-
-
