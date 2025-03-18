@@ -66,6 +66,16 @@ message: "Missing required fields" });
     // Process file upload only after validation
     const image = req.file?.filename || "";
     const verificationToken = crypto.randomBytes(32).toString("hex");
+        
+    const emailResponse = await sendVerificationEmail(email, verificationToken);
+    
+    if (!emailResponse.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email. Please try again later.",
+        error: emailResponse.error,
+      });
+    }
 
     // Create the user
     const user = await prisma.user.create({
@@ -92,8 +102,6 @@ message: "Missing required fields" });
       },
     });
 
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken);
 
     return res.status(201).json({
       success: true,
@@ -251,8 +259,15 @@ export const updateUser = async (req, res) => {
     if (user.email !== email) {
       // Send verification email
       const verificationToken = crypto.randomBytes(32).toString("hex");
-
-      await prisma.user.update({
+const emailResponse = await sendVerificationEmail(email, verificationToken);
+    
+    if (!emailResponse.success) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification email. Please try again later.",
+        error: emailResponse.error,
+      });
+    }      await prisma.user.update({
         where: { id: id },
         data: {
           verificationToken,
@@ -260,8 +275,7 @@ export const updateUser = async (req, res) => {
         },
       });
 
-      // Send verification email
-      await sendVerificationEmail(email, verificationToken);
+      
       changes.push("Status changed to INACTIVE, verification email sent.");
     }
 
