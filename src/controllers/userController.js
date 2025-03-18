@@ -535,9 +535,15 @@ export const resetPassword = async (req, res) => {
       .json({ message: "Error resetting password", error: error.message });
   }
 };
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Check if email and password are provided
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
 
     // Find the user by email
     const user = await prisma.user.findUnique({ where: { email } });
