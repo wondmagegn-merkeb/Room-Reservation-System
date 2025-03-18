@@ -155,15 +155,6 @@ export const getAllUsers = async (req, res) => {
       });
     }
 
-    // Log the operation in the Log table
-    await prisma.log.create({
-      data: {
-        category: "READ", // Category could be READ since you're retrieving data
-        description: "Fetched all users", // Description of the action
-        performedBy: req.user.id, // Assuming the user who performed the action is logged in
-      },
-    });
-
     // Send a success response with the list of users
     return res.status(200).json({ success: true, users });
   } catch (error) {
@@ -312,6 +303,7 @@ export const updateUser = async (req, res) => {
       success: false,
       message: "Error updating user",
       error: error.message || error,
+      errorStack: error.stack
     });
   }
 };
