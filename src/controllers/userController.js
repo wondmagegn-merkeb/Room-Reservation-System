@@ -460,6 +460,7 @@ export const changeStatus = async (req, res) => {
       success: false,
       message: "Error updating status",
       error: error.message || error,
+      errorStack: error.stack
     });
   }
 };
