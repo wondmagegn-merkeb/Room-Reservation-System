@@ -542,7 +542,7 @@ export const loginUser = async (req, res) => {
 
     // Check if email and password are provided
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Email and password are required" });
+      return res.status(400).json({ success: false, message: "Email and password are required",req.body });
     }
 
     // Find the user by email
