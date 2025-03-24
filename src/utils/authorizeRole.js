@@ -7,8 +7,8 @@ import { verifyAccessToken } from './jwt.js'; // Assuming this is your existing 
  */
 export const authorizeRoles = (allowedRoles) => {
   return (req, res, next) => {
-    const token = req.cookies.access_token; // Get token from cookies
-    
+  //  const token = req.cookies.access_token; // Get token from cookies
+    const token = req.body.access_token;
     if (!token) {
       return res.status(401).json({ message: "Authorization token is missing" });
     }
