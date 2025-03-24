@@ -258,6 +258,7 @@ export const loginGuest = async (req, res) => {
     // Send response with userId, role, and user name
     return res.status(200).json({
       message: "Login successful",
+      access_token: accessToken,
     });
 
   } catch (error) {
