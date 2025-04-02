@@ -9,7 +9,7 @@ router.post(
     roomController.createRoom);
 router.get(
   "/",
-  authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
+  
   roomController.getAllRooms
 );
 
