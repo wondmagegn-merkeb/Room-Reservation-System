@@ -5,11 +5,11 @@ const router = express.Router();
 //authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
 router.post(
     '/',
-    
+    authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
     roomController.createRoom);
 router.get(
   "/",
-  
+  authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
   roomController.getAllRooms
 );
 
@@ -17,7 +17,7 @@ router.get("/available", roomController.getAvailableRooms);
 
 router.get(
   "/:id",
-  
+  authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
   roomController.getRoomById
 );   
 router.put(
@@ -27,7 +27,7 @@ router.put(
 );    
 router.delete(
   "/:id",
-  
+  authorizeRoles(["ADMIN", "ROOM_MANAGER"]),
   roomController.deleteRoom
 ); 
 
