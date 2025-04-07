@@ -32,7 +32,7 @@ export const getAllRooms = async (req, res) => {
     const rooms = await roomModel.getAllRooms();
 
     // Log the operation
-    await logOperation("READ", "Fetched all rooms", req.user.id);
+   // await logOperation("READ", "Fetched all rooms", req.user.id);
 
     res.status(200).json(rooms);
   } catch (error) {
