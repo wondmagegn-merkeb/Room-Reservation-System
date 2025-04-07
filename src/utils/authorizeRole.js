@@ -24,7 +24,9 @@ export const authorizeRoles = (allowedRoles) => {
 
       // Attach user info to request for further processing
      // req.user = decoded;
+      
       req.user.id ="2581f818-9edd-4331-85ac-b625e0d0d67a";
+      console.log(req.user.id)
       next(); // Continue to the next middleware or route handler
     } catch (error) {
       return res.status(403).json({ message: error.message || "Invalid or expired access token" });
