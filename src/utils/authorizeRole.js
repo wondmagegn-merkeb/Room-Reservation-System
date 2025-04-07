@@ -25,7 +25,7 @@ export const authorizeRoles = (allowedRoles) => {
       // Attach user info to request for further processing
      // req.user = decoded;
       
-     // req.user.id ="2581f818-9edd-4331-85ac-b625e0d0d67a";
+      req.user ={id:"2581f818-9edd-4331-85ac-b625e0d0d67a"};
       console.log(req.user)
       next(); // Continue to the next middleware or route handler
     } catch (error) {
