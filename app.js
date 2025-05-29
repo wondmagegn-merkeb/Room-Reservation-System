@@ -36,7 +36,7 @@ app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 // Example of configuring CORS
 const corsOptions = {
-  origin: process.env.BASE_URL, // Allow requests only from this origin
+  origin: "*", // Allow requests only from this origin
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"], // Allow only these HTTP methods
 };
 
