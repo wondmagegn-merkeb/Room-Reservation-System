@@ -4,7 +4,7 @@ import { logOperation } from "../utils/log.js";
 // ✅ Get All Room Types
 export const getAllRoomTypes = async (req, res) => {
   try {
-    const roomTypes = await roomTypeModel.getAllRoomTypes();
+    const roomTypes = await roomTypeModel.getAllRoomTypes({include: { amenities: true }});
 
     // Log the operation
     await logOperation("READ", "Fetched all room types", req.user.id);
