@@ -1,6 +1,6 @@
 import {prisma} from "../prismaClient.js"
 export const getAllRoomTypes = async () => {
-  return await prisma.roomType.findMany(
+  return await prisma.roomType.findMany({include: { amenities: true }}
 );
 };
 
